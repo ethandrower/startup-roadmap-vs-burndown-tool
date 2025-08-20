@@ -13,8 +13,8 @@ Thank you for your interest in contributing to the Executive Dashboard! This doc
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/yourusername/exec-dashboard.git
-   cd exec-dashboard
+   git clone https://github.com/yourusername/startup-roadmap-vs-burndown-tool.git
+   cd startup-roadmap-vs-burndown-tool
    ```
 3. Open `index.html` in your browser to start developing
 4. Make changes and refresh the browser to see results

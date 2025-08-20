@@ -1,8 +1,17 @@
-# Executive Dashboard
+# Startup Roadmap vs Burndown Tool
 
 A powerful, open-source executive dashboard for tracking capital burn rate, roadmap initiatives, and operational expenses. Built as a single HTML file with no dependencies, making it perfect for quick deployment and customization.
 
-![Dashboard Preview](https://via.placeholder.com/800x400?text=Dashboard+Preview)
+## 📸 Screenshots
+
+### Main Dashboard Setup
+![Dashboard Setup](images/add%20operating%20costs%20and%20starting%20values.png)
+
+### Expense & Initiative Management  
+![Expense Management](images/Screenshot%202025-08-20%20at%203.20.33%20PM.png)
+
+### Capital Burn & Roadmap Visualization
+![Roadmap Timeline](images/Screenshot%202025-08-20%20at%203.20.48%20PM.png)
 
 ## 🚀 Features
 
@@ -36,7 +45,7 @@ A powerful, open-source executive dashboard for tracking capital burn rate, road
 3. Start planning your initiatives and tracking expenses!
 
 ### Option 2: GitHub Pages (Coming Soon)
-Visit the live demo at: `https://yourusername.github.io/exec-dashboard`
+Visit the live demo at: `https://ethandrower.github.io/startup-roadmap-vs-burndown-tool`
 
 ## 📖 Usage Guide
 
@@ -177,9 +186,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support & Community
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/exec-dashboard/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/exec-dashboard/discussions)
-- 📧 **Email**: your-email@domain.com
+- 🐛 **Issues**: [GitHub Issues](https://github.com/ethandrower/startup-roadmap-vs-burndown-tool/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/ethandrower/startup-roadmap-vs-burndown-tool/discussions)
+- 📧 **Email**: Contact via GitHub Issues
 
 ## 🗺️ Roadmap
 
