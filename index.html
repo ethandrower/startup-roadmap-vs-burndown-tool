@@ -631,6 +631,10 @@
                 type: 'line'
             }];
             
+            // Calculate the maximum Y value needed first
+            const maxRoadmapHeight = startCapital + (startCapital * 0.1) + (enabledInitiatives.length * (startCapital * 0.05));
+            const yAxisMax = Math.max(startCapital + (startCapital * 0.2), maxRoadmapHeight + (startCapital * 0.1));
+            
             // Add roadmap timeline bars for each initiative
             const colors = [
                 'rgba(251, 146, 60, 0.8)',
@@ -694,10 +698,6 @@
                     });
                 }
             });
-            
-            // Calculate the maximum Y value needed
-            const maxRoadmapHeight = startCapital + (startCapital * 0.1) + (enabledInitiatives.length * (startCapital * 0.05));
-            const yAxisMax = Math.max(startCapital + (startCapital * 0.2), maxRoadmapHeight + (startCapital * 0.1));
             
             // Create new chart
             chart = new Chart(ctx, {
