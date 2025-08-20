@@ -452,9 +452,75 @@
             // Find date range based on initiatives
             const enabledInitiatives = initiatives.filter(i => i.enabled);
             if (enabledInitiatives.length === 0) {
-                // If no initiatives, use default start date and 52 weeks
+                // If no initiatives, create a simple capital burn chart
                 const startDate = new Date(document.getElementById('startDate').value);
-                generateChartWithDefaults(ctx, startCapital, weeklyBurn, startDate);
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + (52 * 7)); // 52 weeks
+                
+                const labels = [];
+                const capitalData = [];
+                
+                for (let week = 0; week <= 52; week++) {
+                    const weekDate = new Date(startDate);
+                    weekDate.setDate(weekDate.getDate() + (week * 7));
+                    
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const dateLabel = `${monthNames[weekDate.getMonth()]} ${weekDate.getDate()}`;
+                    labels.push(dateLabel);
+                    
+                    const remainingCapital = startCapital - (weeklyBurn * week);
+                    capitalData.push(Math.max(0, remainingCapital));
+                }
+                
+                // Destroy existing chart if it exists
+                if (chart) {
+                    chart.destroy();
+                }
+                
+                // Create simple chart with just capital line
+                chart = new Chart(ctx, {
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Remaining Capital ($)',
+                            data: capitalData,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            yAxisID: 'y',
+                            order: 1,
+                            type: 'line'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Timeline'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                min: 0,
+                                max: startCapital + (startCapital * 0.1),
+                                title: {
+                                    display: true,
+                                    text: 'Capital ($)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
                 return;
             }
             
@@ -550,8 +616,7 @@
                 if (startIndex !== -1 && endIndex !== -1) {
                     // Create horizontal timeline bar using line dataset with thick line
                     const timelineData = [];
-                    const maxCapital = Math.max(...capitalData);
-                    const timelineHeight = maxCapital + 150000 + (index * 80000);
+                    const timelineHeight = startCapital + (startCapital * 0.1) + (index * (startCapital * 0.05));
                     
                     for (let i = 0; i < labels.length; i++) {
                         if (i >= startIndex && i <= endIndex) {
@@ -579,6 +644,10 @@
                 }
             });
             
+            // Calculate the maximum Y value needed
+            const maxRoadmapHeight = startCapital + (startCapital * 0.1) + (enabledInitiatives.length * (startCapital * 0.05));
+            const yAxisMax = Math.max(startCapital + (startCapital * 0.2), maxRoadmapHeight + (startCapital * 0.1));
+            
             // Create new chart
             chart = new Chart(ctx, {
                 data: {
@@ -604,6 +673,8 @@
                             type: 'linear',
                             display: true,
                             position: 'left',
+                            min: 0,
+                            max: yAxisMax,
                             title: {
                                 display: true,
                                 text: 'Capital ($) / Initiative Timeline'
