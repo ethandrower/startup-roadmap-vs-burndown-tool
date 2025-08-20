@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "exportDate": "2025-08-20T20:11:15.713Z",
+  "settings": {
+    "startingCapital": 1000000,
+    "startDate": "2025-08-20"
+  },
+  "expenses": [
+    {
+      "enabled": true,
+      "name": "Engineering Team",
+      "monthly": 80000,
+      "notes": "4 engineers @ $20k/mo"
+    },
+    {
+      "enabled": true,
+      "name": "Product/Design",
+      "monthly": 25000,
+      "notes": "2 people @ $12.5k/mo"
+    },
+    {
+      "enabled": true,
+      "name": "Infrastructure",
+      "monthly": 5000,
+      "notes": "AWS, Heroku, tools"
+    },
+    {
+      "enabled": true,
+      "name": "Other Operating",
+      "monthly": 10000,
+      "notes": "Legal, accounting, misc"
+    }
+  ],
+  "initiatives": [
+    {
+      "enabled": true,
+      "name": "PDF Enhancement",
+      "description": "Regulatory document processing",
+      "weeks": 8,
+      "designHours": 80,
+      "devHours": 320,
+      "productHours": 40,
+      "startDate": "2024-01-15",
+      "multiplier": 1
+    },
+    {
+      "enabled": true,
+      "name": "API Integration",
+      "description": "Third-party integrations",
+      "weeks": 6,
+      "designHours": 40,
+      "devHours": 240,
+      "productHours": 30,
+      "startDate": "2024-02-01",
+      "multiplier": 1
+    },
+    {
+      "enabled": true,
+      "name": "TEST1",
+      "description": "",
+      "weeks": 4000,
+      "designHours": 0,
+      "devHours": 0,
+      "productHours": 0,
+      "startDate": "2025-08-20",
+      "multiplier": 1
+    }
+  ]
+}

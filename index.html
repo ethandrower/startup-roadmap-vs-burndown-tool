@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CiteMed Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            font-weight: 600;
+        }
+        input[type="number"], input[type="text"], input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="number"] {
+            width: 120px;
+        }
+        input[type="text"] {
+            width: 250px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .checkbox-cell {
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+        .totals {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #28a745;
+        }
+        .warning {
+            color: #dc3545;
+        }
+        .info-box {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .disabled-row {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>CiteMed Executive Dashboard</h1>
+        
+        <!-- Initial Capital Section -->
+        <div class="section">
+            <h2>Initial Settings</h2>
+            <div class="input-group">
+                <label for="startingCapital">Starting Capital ($):</label>
+                <input type="number" id="startingCapital" value="1000000" onchange="updateChart(); autoSave();">
+            </div>
+            <div class="input-group">
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" value="2024-01-01" onchange="updateChart(); autoSave();">
+            </div>
+            <div class="input-group">
+                <button class="btn btn-success" onclick="exportToJson()">Export to JSON</button>
+                <button class="btn btn-primary" onclick="importFromJson()">Import from File</button>
+                <button class="btn btn-secondary" onclick="loadDefaultConfig()">Load Default Config</button>
+                <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+        </div>
+
+        <!-- Monthly Costs Section -->
+        <div class="section">
+            <h2>Monthly Operating Costs</h2>
+            <button class="btn btn-primary" onclick="addExpenseRow()">Add Expense</button>
+            <table id="expensesTable">
+                <thead>
+                    <tr>
+                        <th>Enable</th>
+                        <th>Expense Name</th>
+                        <th>Monthly Cost ($)</th>
+                        <th>Notes (rate/frequency)</th>
+                        <th>Weekly Cost</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="expensesBody">
+                </tbody>
+            </table>
+            <div class="totals">
+                Total Monthly: $<span id="totalMonthly">0</span> | 
+                Total Weekly: $<span id="totalWeekly">0</span>
+            </div>
+        </div>
+
+        <!-- Roadmap Initiatives Section -->
+        <div class="section">
+            <h2>Roadmap Initiatives</h2>
+            <button class="btn btn-primary" onclick="addInitiativeRow()">Add Initiative</button>
+            <table id="initiativesTable">
+                <thead>
+                    <tr>
+                        <th>Enable</th>
+                        <th>Initiative Name</th>
+                        <th>Description</th>
+                        <th>Weeks Effort</th>
+                        <th>Design Hours</th>
+                        <th>Dev Hours</th>
+                        <th>Product Hours</th>
+                        <th>Start Date</th>
+                        <th>Resource Multiplier</th>
+                        <th>Adjusted Weeks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="initiativesBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="section">
+            <h2>Capital Burn Rate & Roadmap Timeline</h2>
+            <div class="info-box">
+                <strong>Chart Info:</strong> Blue line shows capital over time. Colored horizontal bars show initiative timelines (Gantt-style).
+                Adjust resource multipliers to see how adding resources affects timeline duration.
+            </div>
+            <div class="chart-container">
+                <canvas id="burnChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data storage
+        let expenses = [];
+        let initiatives = [];
+        let chart = null;
+
+        // Initialize with sample data
+        function initializeSampleData() {
+            // Sample expenses
+            expenses = [
+                { enabled: true, name: 'Engineering Team', monthly: 80000, notes: '4 engineers @ $20k/mo' },
+                { enabled: true, name: 'Product/Design', monthly: 25000, notes: '2 people @ $12.5k/mo' },
+                { enabled: true, name: 'Infrastructure', monthly: 5000, notes: 'AWS, Heroku, tools' },
+                { enabled: true, name: 'Other Operating', monthly: 10000, notes: 'Legal, accounting, misc' }
+            ];
+            
+            // Sample initiatives
+            initiatives = [
+                { 
+                    enabled: true,
+                    name: 'PDF Enhancement',
+                    description: 'Regulatory document processing',
+                    weeks: 8,
+                    designHours: 80,
+                    devHours: 320,
+                    productHours: 40,
+                    startDate: '2024-01-15',
+                    multiplier: 1
+                },
+                {
+                    enabled: true,
+                    name: 'API Integration',
+                    description: 'Third-party integrations',
+                    weeks: 6,
+                    designHours: 40,
+                    devHours: 240,
+                    productHours: 30,
+                    startDate: '2024-02-01',
+                    multiplier: 1
+                }
+            ];
+            
+            renderExpenses();
+            renderInitiatives();
+            updateChart();
+        }
+
+        // Expense management functions
+        function addExpenseRow(expense = null) {
+            const newExpense = expense || {
+                enabled: true,
+                name: '',
+                monthly: 0,
+                notes: ''
+            };
+            expenses.push(newExpense);
+            renderExpenses();
+            autoSave();
+        }
+
+        function removeExpense(index) {
+            expenses.splice(index, 1);
+            renderExpenses();
+            updateChart();
+            autoSave();
+        }
+
+        function renderExpenses() {
+            const tbody = document.getElementById('expensesBody');
+            tbody.innerHTML = '';
+            
+            expenses.forEach((expense, index) => {
+                const row = tbody.insertRow();
+                const weeklyAmount = expense.monthly / 4.33; // Average weeks per month
+                
+                row.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" ${expense.enabled ? 'checked' : ''} 
+                               onchange="toggleExpense(${index})">
+                    </td>
+                    <td>
+                        <input type="text" value="${expense.name}" 
+                               onchange="updateExpense(${index}, 'name', this.value)"
+                               ${!expense.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="number" value="${expense.monthly}" 
+                               onchange="updateExpense(${index}, 'monthly', parseFloat(this.value))"
+                               ${!expense.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="text" value="${expense.notes}" 
+                               onchange="updateExpense(${index}, 'notes', this.value)"
+                               ${!expense.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>$${weeklyAmount.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="removeExpense(${index})">Remove</button>
+                    </td>
+                `;
+                
+                if (!expense.enabled) {
+                    row.classList.add('disabled-row');
+                }
+            });
+            
+            updateExpenseTotals();
+        }
+
+        function updateExpense(index, field, value) {
+            expenses[index][field] = value;
+            renderExpenses();
+            updateChart();
+            autoSave();
+        }
+
+        function toggleExpense(index) {
+            expenses[index].enabled = !expenses[index].enabled;
+            renderExpenses();
+            updateChart();
+            autoSave();
+        }
+
+        function updateExpenseTotals() {
+            const totalMonthly = expenses
+                .filter(e => e.enabled)
+                .reduce((sum, e) => sum + e.monthly, 0);
+            const totalWeekly = totalMonthly / 4.33;
+            
+            document.getElementById('totalMonthly').textContent = totalMonthly.toFixed(2);
+            document.getElementById('totalWeekly').textContent = totalWeekly.toFixed(2);
+        }
+
+        // Initiative management functions
+        function addInitiativeRow(initiative = null) {
+            const newInitiative = initiative || {
+                enabled: true,
+                name: '',
+                description: '',
+                weeks: 4,
+                designHours: 0,
+                devHours: 0,
+                productHours: 0,
+                startDate: new Date().toISOString().split('T')[0],
+                multiplier: 1
+            };
+            initiatives.push(newInitiative);
+            renderInitiatives();
+            autoSave();
+        }
+
+        function removeInitiative(index) {
+            initiatives.splice(index, 1);
+            renderInitiatives();
+            updateChart();
+            autoSave();
+        }
+
+        function renderInitiatives() {
+            const tbody = document.getElementById('initiativesBody');
+            tbody.innerHTML = '';
+            
+            initiatives.forEach((initiative, index) => {
+                const row = tbody.insertRow();
+                const adjustedWeeks = initiative.weeks / initiative.multiplier;
+                
+                row.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" ${initiative.enabled ? 'checked' : ''} 
+                               onchange="toggleInitiative(${index})">
+                    </td>
+                    <td>
+                        <input type="text" value="${initiative.name}" 
+                               onchange="updateInitiative(${index}, 'name', this.value)"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="text" value="${initiative.description}" 
+                               onchange="updateInitiative(${index}, 'description', this.value)"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="number" value="${initiative.weeks}" min="1"
+                               onchange="updateInitiative(${index}, 'weeks', parseFloat(this.value))"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="number" value="${initiative.designHours}" min="0"
+                               onchange="updateInitiative(${index}, 'designHours', parseFloat(this.value))"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="number" value="${initiative.devHours}" min="0"
+                               onchange="updateInitiative(${index}, 'devHours', parseFloat(this.value))"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="number" value="${initiative.productHours}" min="0"
+                               onchange="updateInitiative(${index}, 'productHours', parseFloat(this.value))"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="date" value="${initiative.startDate}" 
+                               onchange="updateInitiative(${index}, 'startDate', this.value)"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="number" value="${initiative.multiplier}" min="0.5" max="5" step="0.5"
+                               onchange="updateInitiative(${index}, 'multiplier', parseFloat(this.value))"
+                               ${!initiative.enabled ? 'disabled' : ''}>
+                    </td>
+                    <td>${adjustedWeeks.toFixed(1)} weeks</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="removeInitiative(${index})">Remove</button>
+                    </td>
+                `;
+                
+                if (!initiative.enabled) {
+                    row.classList.add('disabled-row');
+                }
+            });
+        }
+
+        function updateInitiative(index, field, value) {
+            initiatives[index][field] = value;
+            renderInitiatives();
+            updateChart();
+            autoSave();
+        }
+
+        function toggleInitiative(index) {
+            initiatives[index].enabled = !initiatives[index].enabled;
+            renderInitiatives();
+            updateChart();
+            autoSave();
+        }
+
+        // Chart functions
+        function updateChart() {
+            const ctx = document.getElementById('burnChart').getContext('2d');
+            const startCapital = parseFloat(document.getElementById('startingCapital').value);
+            
+            // Calculate weekly burn rate
+            const weeklyBurn = expenses
+                .filter(e => e.enabled)
+                .reduce((sum, e) => sum + e.monthly / 4.33, 0);
+            
+            // Find date range based on initiatives
+            const enabledInitiatives = initiatives.filter(i => i.enabled);
+            if (enabledInitiatives.length === 0) {
+                // If no initiatives, use default start date and 52 weeks
+                const startDate = new Date(document.getElementById('startDate').value);
+                generateChartWithDefaults(ctx, startCapital, weeklyBurn, startDate);
+                return;
+            }
+            
+            // Calculate earliest start and latest end dates
+            let earliestStart = new Date(enabledInitiatives[0].startDate);
+            let latestEnd = new Date(enabledInitiatives[0].startDate);
+            
+            enabledInitiatives.forEach(initiative => {
+                const initStart = new Date(initiative.startDate);
+                const adjustedWeeks = initiative.weeks / initiative.multiplier;
+                const initEnd = new Date(initStart);
+                initEnd.setDate(initEnd.getDate() + (adjustedWeeks * 7));
+                
+                if (initStart < earliestStart) earliestStart = initStart;
+                if (initEnd > latestEnd) latestEnd = initEnd;
+            });
+            
+            // Add padding only after the latest end date
+            latestEnd.setDate(latestEnd.getDate() + 14);
+            
+            // Calculate total weeks to display
+            const totalWeeks = Math.ceil((latestEnd - earliestStart) / (1000 * 60 * 60 * 24 * 7));
+            
+            const labels = [];
+            const capitalData = [];
+            const initiativeData = [];
+            const dateLabels = [];
+            
+            // Generate data points
+            for (let week = 0; week <= totalWeeks; week++) {
+                const weekDate = new Date(earliestStart);
+                weekDate.setDate(weekDate.getDate() + (week * 7));
+                
+                // Format date label
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const dateLabel = `${monthNames[weekDate.getMonth()]} ${weekDate.getDate()}`;
+                labels.push(dateLabel);
+                dateLabels.push(weekDate);
+                
+                // Calculate capital at this point (starting from earliest initiative date)
+                const weeksFromProjectStart = (weekDate - earliestStart) / (1000 * 60 * 60 * 24 * 7);
+                const remainingCapital = startCapital - (weeklyBurn * weeksFromProjectStart);
+                capitalData.push(Math.max(0, remainingCapital));
+                
+            }
+            
+            // Destroy existing chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+            
+            // Create datasets for the chart
+            const datasets = [{
+                label: 'Remaining Capital ($)',
+                data: capitalData,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                yAxisID: 'y',
+                order: 1,
+                type: 'line'
+            }];
+            
+            // Add roadmap timeline bars for each initiative
+            const colors = [
+                'rgba(251, 146, 60, 0.8)',
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(168, 85, 247, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(245, 158, 11, 0.8)'
+            ];
+            
+            enabledInitiatives.forEach((initiative, index) => {
+                const initStartDate = new Date(initiative.startDate);
+                const adjustedDuration = initiative.weeks / initiative.multiplier;
+                const initEndDate = new Date(initStartDate);
+                initEndDate.setDate(initEndDate.getDate() + (adjustedDuration * 7));
+                
+                // Find start and end indices in the labels array
+                let startIndex = -1;
+                let endIndex = -1;
+                
+                for (let i = 0; i < dateLabels.length; i++) {
+                    const weekDate = dateLabels[i];
+                    if (startIndex === -1 && weekDate >= initStartDate) {
+                        startIndex = i;
+                    }
+                    if (weekDate <= initEndDate) {
+                        endIndex = i;
+                    }
+                }
+                
+                if (startIndex !== -1 && endIndex !== -1) {
+                    // Create horizontal timeline bar using line dataset with thick line
+                    const timelineData = [];
+                    const maxCapital = Math.max(...capitalData);
+                    const timelineHeight = maxCapital + 150000 + (index * 80000);
+                    
+                    for (let i = 0; i < labels.length; i++) {
+                        if (i >= startIndex && i <= endIndex) {
+                            timelineData.push(timelineHeight);
+                        } else {
+                            timelineData.push(null);
+                        }
+                    }
+                    
+                    datasets.push({
+                        label: initiative.name || `Initiative ${index + 1}`,
+                        data: timelineData,
+                        type: 'line',
+                        borderColor: colors[index % colors.length].replace('0.8', '1'),
+                        backgroundColor: colors[index % colors.length],
+                        borderWidth: 8,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        fill: false,
+                        tension: 0,
+                        yAxisID: 'y',
+                        order: 10 + index,
+                        spanGaps: false
+                    });
+                }
+            });
+            
+            // Create new chart
+            chart = new Chart(ctx, {
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Timeline'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Capital ($) / Initiative Timeline'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(context) {
+                                    if (context[0].datasetIndex === 0) {
+                                        const week = context[0].dataIndex;
+                                        const weeksUntilZero = startCapital / weeklyBurn;
+                                        if (week === Math.floor(weeksUntilZero)) {
+                                            return '\n⚠️ Capital depleted!';
+                                        }
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // JSON Export/Import Functions
+        function exportToJson() {
+            const dashboardData = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                settings: {
+                    startingCapital: parseFloat(document.getElementById('startingCapital').value),
+                    startDate: document.getElementById('startDate').value
+                },
+                expenses: expenses,
+                initiatives: initiatives
+            };
+            
+            const dataStr = JSON.stringify(dashboardData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `citemed-dashboard-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('Dashboard data exported successfully');
+        }
+        
+        function importFromJson() {
+            document.getElementById('jsonFileInput').click();
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const dashboardData = JSON.parse(e.target.result);
+                    loadDashboardData(dashboardData);
+                } catch (error) {
+                    alert('Error reading JSON file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function loadDashboardData(data) {
+            try {
+                // Validate data structure
+                if (!data.settings || !data.expenses || !data.initiatives) {
+                    throw new Error('Invalid dashboard data format');
+                }
+                
+                // Load settings
+                document.getElementById('startingCapital').value = data.settings.startingCapital;
+                document.getElementById('startDate').value = data.settings.startDate;
+                
+                // Load expenses and initiatives
+                expenses = data.expenses;
+                initiatives = data.initiatives;
+                
+                // Re-render everything
+                renderExpenses();
+                renderInitiatives();
+                updateChart();
+                
+                console.log('Dashboard data loaded successfully');
+                alert('Dashboard data loaded successfully!');
+                
+            } catch (error) {
+                alert('Error loading dashboard data: ' + error.message);
+                console.error('Load error:', error);
+            }
+        }
+        
+        function saveToLocalStorage() {
+            const dashboardData = {
+                version: "1.0",
+                lastSaved: new Date().toISOString(),
+                settings: {
+                    startingCapital: parseFloat(document.getElementById('startingCapital').value),
+                    startDate: document.getElementById('startDate').value
+                },
+                expenses: expenses,
+                initiatives: initiatives
+            };
+            
+            localStorage.setItem('citemed-dashboard-data', JSON.stringify(dashboardData));
+        }
+        
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('citemed-dashboard-data');
+            if (savedData) {
+                try {
+                    const dashboardData = JSON.parse(savedData);
+                    loadDashboardData(dashboardData);
+                    return true;
+                } catch (error) {
+                    console.error('Error loading from localStorage:', error);
+                }
+            }
+            return false;
+        }
+        
+        async function loadDefaultConfig() {
+            try {
+                const response = await fetch('./default-dashboard-config.json');
+                if (response.ok) {
+                    const dashboardData = await response.json();
+                    loadDashboardData(dashboardData);
+                    console.log('Default configuration loaded successfully');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error loading default config:', error);
+            }
+            return false;
+        }
+
+        // Initialize on page load
+        window.onload = async function() {
+            // Set default start date to today
+            document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+            
+            // Loading priority: localStorage > default config file > sample data
+            if (!loadFromLocalStorage()) {
+                if (!(await loadDefaultConfig())) {
+                    initializeSampleData();
+                }
+            }
+        };
+        
+        // Auto-save to localStorage when data changes
+        function autoSave() {
+            saveToLocalStorage();
+        }
+    </script>
+</body>
+</html>
