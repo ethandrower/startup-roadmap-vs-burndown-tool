@@ -4,14 +4,14 @@ A powerful, open-source executive dashboard for tracking capital burn rate, road
 
 ## 📸 Screenshots
 
-### Main Dashboard Setup
-![Dashboard Setup](images/add%20operating%20costs%20and%20starting%20values.png)
+### Main Dashboard - Capital Burn vs Roadmap View
+![Main Dashboard](images/main%20screenshot%20-%20view%20burn%20rate%20vs%20roadmap%20initiatives.png)
 
-### Expense & Initiative Management  
-![Expense Management](images/Screenshot%202025-08-20%20at%203.20.33%20PM.png)
+### Setting Up Operating Costs & Starting Values
+![Setup Operating Costs](images/add%20operating%20costs%20and%20starting%20values.png)
 
-### Capital Burn & Roadmap Visualization
-![Roadmap Timeline](images/Screenshot%202025-08-20%20at%203.20.48%20PM.png)
+### Adding Your Roadmap Initiatives  
+![Add Roadmap Initiatives](images/add%20your%20roadmap%20initiatives.png)
 
 ## 🚀 Features
 
